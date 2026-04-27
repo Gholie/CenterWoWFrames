@@ -1,0 +1,74 @@
+local _, CWF = ...
+
+-- Native Blizzard frames to re-anchor relative to the virtual center frame.
+-- Unknown or missing frame names are silently skipped.
+CWF.FRAME_LIST = {
+    -- Action bars (protected in combat — applied on PLAYER_REGEN_ENABLED if skipped)
+    "MainMenuBar",
+    "MultiBarBottomLeft",
+    "MultiBarBottomRight",
+    "MultiBarLeft",
+    "MultiBarRight",
+    "PetActionBar",
+    "StanceBar",
+    "PossessBar",
+    "MicroButtonAndBagsBar",
+    "OverrideActionBar",
+    "ExtraActionBarFrame",
+    "ZoneAbilityFrame",
+
+    -- Unit frames
+    "PlayerFrame",
+    "TargetFrame",
+    "FocusFrame",
+    "PartyFrame",
+    "CompactPartyFrame",
+
+    -- Boss / Arena
+    "Boss1TargetFrame",
+    "Boss2TargetFrame",
+    "Boss3TargetFrame",
+    "Boss4TargetFrame",
+    "Boss5TargetFrame",
+    "ArenaEnemyFrames",
+
+    -- Minimap
+    "MinimapCluster",
+
+    -- Objective tracker
+    "ObjectiveTrackerFrame",
+
+    -- Chat frames are intentionally NOT managed here: ChatFrame1-N are positioned
+    -- by the FCF_* dock manager (FCF_SavePositionAndDimensions, FCF_DockUpdate),
+    -- which fights direct SetPoint calls. Let users position chat via Edit Mode.
+
+    -- Auras
+    "BuffFrame",
+    "DebuffFrame",
+    "TemporaryEnchantFrame",
+
+    -- Cast bars
+    "CastingBarFrame",
+
+    -- Status / XP bars
+    "ExperienceBar",
+    "ReputationWatchBar",
+    "HonorWatchBar",
+
+    -- Encounter / raid
+    "EncounterBar",
+    "CompactRaidFrameManager",
+
+    -- Alerts and floating UI
+    "AlertFrame",
+    "TalkingHeadFrame",
+    "RaidBossEmoteFrame",
+
+    -- Misc
+    "LootFrame",
+    "DurabilityFrame",
+    "ZoneTextFrame",
+    "SubZoneTextFrame",
+    "UIErrorsFrame",
+    "TicketStatusFrame",
+}

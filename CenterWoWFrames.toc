@@ -1,0 +1,11 @@
+## Interface: 120005
+## Title: CenterWoWFrames
+## Notes: Anchors native UI frames to a configured aspect ratio, centered on screen.
+## Author: Gholie
+## Version: 1.0.0
+## SavedVariables: CenterWoWFramesDB
+
+FrameList.lua
+Config.lua
+Core.lua
+UIPanels.lua
