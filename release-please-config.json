@@ -1,0 +1,14 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "CenterWoWFrames.toc",
+          "version-pattern": "## Version: {{version}}"
+        }
+      ]
+    }
+  }
+}

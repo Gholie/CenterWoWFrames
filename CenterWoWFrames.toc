@@ -4,6 +4,7 @@
 ## Author: Gholie
 ## Version: 1.0.0
 ## SavedVariables: CenterWoWFramesDB
+## X-Curse-Project-ID: 1526766
 
 FrameList.lua
 Config.lua
