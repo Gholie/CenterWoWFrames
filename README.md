@@ -1,5 +1,7 @@
 # CenterWoWFrames
 
+![CenterWoWFrames logo](https://raw.githubusercontent.com/Gholie/CenterWoWFrames/main/logo.svg)
+
 Keeps native WoW UI frames anchored to a chosen aspect ratio, centered on your screen - instead of being glued to the far edges of an ultrawide display.
 
 ## The problem
