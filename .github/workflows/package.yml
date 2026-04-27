@@ -2,7 +2,7 @@ name: Package and Publish
 
 on:
   release:
-    types: [published]
+    types: [released]
 
 permissions:
   contents: write
@@ -12,6 +12,13 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
+      - name: Create GitHub App Token
+        id: token
+        uses: actions/create-github-app-token@v3.1.1
+        with:
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          client_id: ${{ secrets.GH_APP_CLIENT_ID }}
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
@@ -19,4 +26,4 @@ jobs:
       - uses: BigWigsMods/packager@6d50adb6e8517eefef63f4afb16a6518166a6b28 # v2.5.1
         env:
           CF_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OAUTH: ${{ steps.token.outputs.token }}
