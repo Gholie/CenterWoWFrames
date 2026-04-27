@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220" width="400" height="220">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d0d1c"/>
+      <stop offset="100%" stop-color="#060610"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <marker id="arrowGold" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#c8a84b"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="220" fill="url(#bgGrad)" rx="8"/>
+
+  <!-- ===== LEFT FRAME (16:9) ===== -->
+  <rect x="25" y="58" width="150" height="84" fill="#0f0f22" stroke="#c8a84b" stroke-width="2"/>
+  <!-- Corner ornaments -->
+  <polyline points="25,72 25,58 39,58" fill="none" stroke="#e8c060" stroke-width="2"/>
+  <polyline points="161,58 175,58 175,72" fill="none" stroke="#e8c060" stroke-width="2"/>
+  <polyline points="25,128 25,142 39,142" fill="none" stroke="#e8c060" stroke-width="2"/>
+  <polyline points="161,142 175,142 175,128" fill="none" stroke="#e8c060" stroke-width="2"/>
+  <!-- Inner dashed border -->
+  <rect x="31" y="64" width="138" height="72" fill="none" stroke="#c8a84b" stroke-width="0.5" stroke-opacity="0.35" stroke-dasharray="5,4"/>
+  <!-- Crosshair -->
+  <line x1="100" y1="66" x2="100" y2="134" stroke="#e8c060" stroke-width="0.8" stroke-opacity="0.65" stroke-dasharray="4,3"/>
+  <line x1="33" y1="100" x2="167" y2="100" stroke="#e8c060" stroke-width="0.8" stroke-opacity="0.65" stroke-dasharray="4,3"/>
+  <!-- Center marker -->
+  <circle cx="100" cy="100" r="5" fill="none" stroke="#e8c060" stroke-width="1.5" filter="url(#glow)"/>
+  <circle cx="100" cy="100" r="2" fill="#e8c060" filter="url(#glow)"/>
+  <!-- Ratio label -->
+  <text x="100" y="155" text-anchor="middle" font-family="monospace" font-size="12" fill="#c8a84b" opacity="0.85">16:9</text>
+
+  <!-- ===== ARROW ===== -->
+  <line x1="186" y1="100" x2="226" y2="100" stroke="#c8a84b" stroke-width="2" marker-end="url(#arrowGold)"/>
+
+  <!-- ===== RIGHT FRAME (4:3) ===== -->
+  <rect x="235" y="62" width="100" height="76" fill="#0f0f22" stroke="#c8a84b" stroke-width="2"/>
+  <!-- Corner ornaments -->
+  <polyline points="235,73 235,62 246,62" fill="none" stroke="#e8c060" stroke-width="2"/>
+  <polyline points="324,62 335,62 335,73" fill="none" stroke="#e8c060" stroke-width="2"/>
+  <polyline points="235,127 235,138 246,138" fill="none" stroke="#e8c060" stroke-width="2"/>
+  <polyline points="324,138 335,138 335,127" fill="none" stroke="#e8c060" stroke-width="2"/>
+  <!-- Inner dashed border -->
+  <rect x="241" y="68" width="88" height="64" fill="none" stroke="#c8a84b" stroke-width="0.5" stroke-opacity="0.35" stroke-dasharray="4,4"/>
+  <!-- Crosshair -->
+  <line x1="285" y1="70" x2="285" y2="130" stroke="#e8c060" stroke-width="0.8" stroke-opacity="0.65" stroke-dasharray="4,3"/>
+  <line x1="243" y1="100" x2="327" y2="100" stroke="#e8c060" stroke-width="0.8" stroke-opacity="0.65" stroke-dasharray="4,3"/>
+  <!-- Center marker -->
+  <circle cx="285" cy="100" r="5" fill="none" stroke="#e8c060" stroke-width="1.5" filter="url(#glow)"/>
+  <circle cx="285" cy="100" r="2" fill="#e8c060" filter="url(#glow)"/>
+  <!-- Ratio label -->
+  <text x="285" y="155" text-anchor="middle" font-family="monospace" font-size="12" fill="#c8a84b" opacity="0.85">4:3</text>
+
+  <!-- ===== TITLE ===== -->
+  <text x="200" y="192" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="19" fill="#c8a84b" letter-spacing="1.5" filter="url(#glow)">CenterWoWFrames</text>
+  <text x="200" y="210" text-anchor="middle" font-family="sans-serif" font-size="9.5" fill="#c8a84b" opacity="0.55" letter-spacing="2">UI FRAME ASPECT RATIO TOOL</text>
+</svg>
