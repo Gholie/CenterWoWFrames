@@ -1,19 +1,19 @@
 # CenterWoWFrames
 
-Keeps native WoW UI frames anchored to a chosen aspect ratio, centered on your screen — instead of being glued to the far edges of an ultrawide display.
+Keeps native WoW UI frames anchored to a chosen aspect ratio, centered on your screen - instead of being glued to the far edges of an ultrawide display.
 
 ## The problem
 
-On ultrawide monitors (21:9, 32:9, etc.) Blizzard's UI frames — action bars, unit frames, minimap, and so on — anchor to the edges of UIParent, which means they're anchored to the edges of your screen. This puts them far into your peripheral vision, making the game harder to play.
+On ultrawide monitors (21:9, 32:9, etc.) Blizzard's UI frames - action bars, unit frames, minimap, and so on - anchor to the edges of UIParent, which means they're anchored to the edges of your screen. This puts them far into your peripheral vision, making the game harder to play.
 
 ## What this addon does
 
 CenterWoWFrames places an invisible anchor frame in the center of your screen, sized to your chosen aspect ratio (default 16:9). All native UI frames that have horizontal anchors are re-attached to this center frame instead of to UIParent. The result: your UI stays comfortably centered regardless of how wide your monitor is.
 
-- Works with Edit Mode — your customizations are respected and preserved.
-- Works with UI panels (Character, Spellbook, Bank, etc.) — they shift inward to stay within the center zone.
-- Safe in combat — protected frames are re-anchored automatically after combat ends.
-- No UIParent modification — uses only public API.
+- Works with Edit Mode - your customizations are respected and preserved.
+- Works with UI panels (Character, Spellbook, Bank, etc.) - they shift inward to stay within the center zone.
+- Safe in combat - protected frames are re-anchored automatically after combat ends.
+- No UIParent modification - uses only public API.
 
 ## Requirements
 
