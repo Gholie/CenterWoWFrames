@@ -17,8 +17,8 @@ jobs:
         id: token
         uses: actions/create-github-app-token@v3.1.1
         with:
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          client_id: ${{ secrets.GH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          client-id: ${{ secrets.GH_APP_CLIENT_ID }}
 
       - uses: googleapis/release-please-action@v4
         with:
