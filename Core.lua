@@ -106,6 +106,7 @@ events:SetScript("OnEvent", function(_, event, arg1)
     if event == "ADDON_LOADED" then
         if arg1 == ADDON_NAME then
             CWF.InitDB()  -- SavedVariables are ready; no UI work here
+            events:UnregisterEvent("ADDON_LOADED")
         end
 
     elseif event == "PLAYER_LOGIN" then

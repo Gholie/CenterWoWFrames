@@ -24,7 +24,7 @@ local function inset()
     return (UIParent:GetWidth() - CWF.CenterFrame:GetWidth()) / 2
 end
 
-local panelState = {}  -- [frameName] = { baseX = number, shift = number }
+local panelState = {}  -- [frameName] = { bases = {[i]=x, ...}, shift = number }
 
 -- Frames excluded from the UIPanelWindows loop — handled by their own logic.
 local SKIP_PANELS = {
@@ -62,25 +62,26 @@ local function shiftFrame(frame, name, sign)
 
     local newShift = sign * px * UIParent:GetEffectiveScale() / frame:GetEffectiveScale()
 
-    -- If the frame is already at baseX+shift (hook fired again for the same
-    -- positioning event), use the stored base rather than stacking the shift.
     local s = panelState[name]
-    local baseX
-    if s and math.abs(x1 - (s.baseX + s.shift)) < 1.0 then
-        baseX = s.baseX
-    else
-        baseX = x1  -- fresh position from Blizzard
-    end
-
-    -- Preserve all anchor points; shift only UIParent-relative ones.
-    -- Dropping secondary anchors (e.g. a BOTTOMRIGHT for frame sizing)
-    -- collapses the height on frames like FriendsFrame / CommunitiesFrame.
     local n = frame:GetNumPoints()
     local pts = {}
-    pts[1] = {pt1, rel1, relPt1, baseX + newShift, y1}
-    for i = 2, n do
-        local pt, rel, relPt, x, y = frame:GetPoint(i)
-        if rel == UIParent then x = x + newShift end
+    local bases = {}
+
+    for i = 1, n do
+        local pt, rel, relPt, x, y
+        if i == 1 then
+            pt, rel, relPt, x, y = pt1, rel1, relPt1, x1, y1
+        else
+            pt, rel, relPt, x, y = frame:GetPoint(i)
+        end
+        local baseX = x
+        if rel == UIParent then
+            if s and s.bases[i] and math.abs(x - (s.bases[i] + s.shift)) < 1.0 then
+                baseX = s.bases[i]
+            end
+            bases[i] = baseX
+            x = baseX + newShift
+        end
         pts[i] = {pt, rel, relPt, x, y}
     end
 
@@ -91,7 +92,7 @@ local function shiftFrame(frame, name, sign)
         end
     end)
     if ok then
-        panelState[name] = {baseX = baseX, shift = newShift}
+        panelState[name] = {bases = bases, shift = newShift}
     end
 end
 
@@ -118,13 +119,6 @@ CWF.AdjustOpenPanels = DoAdjustOpenPanels
 hooksecurefunc("ShowUIPanel",            DoAdjustOpenPanels)
 hooksecurefunc("HideUIPanel",            DoAdjustOpenPanels)
 hooksecurefunc("UpdateUIPanelPositions", DoAdjustOpenPanels)
-
--- AuctionHouseFrame safety net: opens via a path that may bypass ShowUIPanel
--- (e.g. interacting with an NPC triggers Show() directly). OnShow fires after
--- Blizzard has already placed the frame, so reading its position here is safe.
-if AuctionHouseFrame then
-    AuctionHouseFrame:HookScript("OnShow", DoAdjustOpenPanels)
-end
 
 -- Force-center listed frames on UIParent regardless of panel system.
 -- Both hooks run synchronously — the hooksecurefunc fires after ShowUIPanel
@@ -155,20 +149,39 @@ end)
 -- Attach OnShow hooks for direct Show() calls. Retry on ADDON_LOADED so
 -- load-on-demand frames get hooked when their owning addon is finally loaded.
 local hookedOnShow = {}
+
+-- AuctionHouseFrame opens via a path that may bypass ShowUIPanel (e.g.
+-- interacting with an NPC triggers Show() directly). Hook it alongside
+-- CENTER_FRAMES so the load-on-demand retry covers it too.
+local ONSHOW_HOOKS = {
+    {name = "AuctionHouseFrame", handler = DoAdjustOpenPanels},
+}
+for _, name in ipairs(CENTER_FRAMES) do
+    ONSHOW_HOOKS[#ONSHOW_HOOKS + 1] = {name = name, handler = centerFrame}
+end
+
 local function tryHookOnShow()
-    for _, name in ipairs(CENTER_FRAMES) do
-        if not hookedOnShow[name] then
-            local frame = _G[name]
+    local allHooked = true
+    for _, entry in ipairs(ONSHOW_HOOKS) do
+        if not hookedOnShow[entry.name] then
+            local frame = _G[entry.name]
             if frame and frame.HookScript then
-                frame:HookScript("OnShow", centerFrame)
-                hookedOnShow[name] = true
+                frame:HookScript("OnShow", entry.handler)
+                hookedOnShow[entry.name] = true
+            else
+                allHooked = false
             end
         end
     end
+    return allHooked
 end
 
 tryHookOnShow()
 
 local watcher = CreateFrame("Frame")
 watcher:RegisterEvent("ADDON_LOADED")
-watcher:SetScript("OnEvent", tryHookOnShow)
+watcher:SetScript("OnEvent", function()
+    if tryHookOnShow() then
+        watcher:UnregisterEvent("ADDON_LOADED")
+    end
+end)

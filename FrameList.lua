@@ -45,15 +45,12 @@ CWF.FRAME_LIST = {
     -- Auras
     "BuffFrame",
     "DebuffFrame",
-    "TemporaryEnchantFrame",
 
     -- Cast bars
-    "CastingBarFrame",
+    "PlayerCastingBarFrame",
 
-    -- Status / XP bars
-    "ExperienceBar",
-    "ReputationWatchBar",
-    "HonorWatchBar",
+    -- Status bars
+    "StatusTrackingBarManager",
 
     -- Encounter / raid
     "EncounterBar",
