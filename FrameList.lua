@@ -4,17 +4,21 @@ local _, CWF = ...
 -- Unknown or missing frame names are silently skipped.
 CWF.FRAME_LIST = {
     -- Action bars (protected in combat — applied on PLAYER_REGEN_ENABLED if skipped)
-    "MainMenuBar",
+    "MainActionBar",
     "MultiBarBottomLeft",
     "MultiBarBottomRight",
     "MultiBarLeft",
     "MultiBarRight",
+    "MultiBar5",
+    "MultiBar6",
+    "MultiBar7",
     "PetActionBar",
     "StanceBar",
-    "PossessBar",
-    "MicroButtonAndBagsBar",
+    "PossessActionBar",
+    "MicroMenu",
+    "BagsBar",
     "OverrideActionBar",
-    "ExtraActionBarFrame",
+    "ExtraActionBar",
     "ZoneAbilityFrame",
 
     -- Unit frames
@@ -48,12 +52,11 @@ CWF.FRAME_LIST = {
     "TemporaryEnchantFrame",
 
     -- Cast bars
-    "CastingBarFrame",
+    "PlayerCastingBarFrame",
 
-    -- Status / XP bars
-    "ExperienceBar",
-    "ReputationWatchBar",
-    "HonorWatchBar",
+    -- Status / XP / Rep / Honor bars (all children of StatusTrackingBarManager;
+    -- the manager itself is the anchored parent frame)
+    "StatusTrackingBarManager",
 
     -- Encounter / raid
     "EncounterBar",

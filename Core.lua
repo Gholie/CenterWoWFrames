@@ -121,7 +121,14 @@ events:SetScript("OnEvent", function(_, event, arg1)
         or event == "UI_SCALE_CHANGED"
         or event == "DISPLAY_SIZE_CHANGED" then
         -- Defer one frame so Blizzard finishes applying its own anchors first.
-        C_Timer.After(0, CWF.CaptureAndApplyAll)
+        -- Guard against burst (e.g. login fires several events): collapse into one call.
+        if not CWF._capturePending then
+            CWF._capturePending = true
+            C_Timer.After(0, function()
+                CWF._capturePending = false
+                CWF.CaptureAndApplyAll()
+            end)
+        end
 
     elseif event == "PLAYER_REGEN_ENABLED" then
         -- Logging in during combat causes the deferred CaptureAndApplyAll to
