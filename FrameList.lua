@@ -18,7 +18,7 @@ CWF.FRAME_LIST = {
     "MicroMenu",
     "BagsBar",
     "OverrideActionBar",
-    "ExtraActionBar",
+    "ExtraActionBarFrame",
     "ZoneAbilityFrame",
 
     -- Unit frames
