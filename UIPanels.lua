@@ -119,13 +119,6 @@ hooksecurefunc("ShowUIPanel",            DoAdjustOpenPanels)
 hooksecurefunc("HideUIPanel",            DoAdjustOpenPanels)
 hooksecurefunc("UpdateUIPanelPositions", DoAdjustOpenPanels)
 
--- AuctionHouseFrame safety net: opens via a path that may bypass ShowUIPanel
--- (e.g. interacting with an NPC triggers Show() directly). OnShow fires after
--- Blizzard has already placed the frame, so reading its position here is safe.
-if AuctionHouseFrame then
-    AuctionHouseFrame:HookScript("OnShow", DoAdjustOpenPanels)
-end
-
 -- Force-center listed frames on UIParent regardless of panel system.
 -- Both hooks run synchronously — the hooksecurefunc fires after ShowUIPanel
 -- returns (all Blizzard positioning done), and OnShow fires after the panel
@@ -162,6 +155,19 @@ local function tryHookOnShow()
             if frame and frame.HookScript then
                 frame:HookScript("OnShow", centerFrame)
                 hookedOnShow[name] = true
+            end
+        end
+    end
+    -- EXTRA_LEFT_PANELS frames (e.g. AuctionHouseFrame) are load-on-demand and can
+    -- open via NPC Show() calls that bypass ShowUIPanel. Hook DoAdjustOpenPanels on
+    -- OnShow here so we catch them regardless of how they were opened.
+    for _, name in ipairs(EXTRA_LEFT_PANELS) do
+        local key = "adj_" .. name
+        if not hookedOnShow[key] then
+            local frame = _G[name]
+            if frame and frame.HookScript then
+                frame:HookScript("OnShow", DoAdjustOpenPanels)
+                hookedOnShow[key] = true
             end
         end
     end

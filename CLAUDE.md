@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A World of Warcraft addon that re-anchors native Blizzard UI frames to a user-chosen aspect ratio (e.g. 16:9, 21:9), centered on screen. Targets retail WoW Patch 12.0 / Midnight (`## Interface: 120005`) — i.e. the post-"addon disarmament" API era.
+A World of Warcraft addon that re-anchors native Blizzard UI frames to a user-chosen aspect ratio (e.g. 16:9, 21:9), centered on screen. Targets retail WoW Patch 12.0 / Midnight (`## Interface: 120007`) — i.e. the post-"addon disarmament" API era.
+
+> **Keep this in sync:** whenever you bump `## Interface:` in `CenterWoWFrames.toc`, update the version referenced above in the same change. The `.toc` is the source of truth; this doc must not drift from it.
 
 There is no build, lint, or test tooling. This is a pure Lua addon; iteration is in-game. To test changes, the directory must live at `<WoW>/_retail_/Interface/AddOns/CenterWoWFrames/` (symlink the repo there) and reload with `/reload` or `/console reloadui`. In-game slash command is `/cwf` (see `Config.lua` for subcommands: `ratio`, `toggle`, `debug`, `reload`, `status`).
 
