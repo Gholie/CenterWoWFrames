@@ -55,6 +55,30 @@ function CWF.SetDebugBorder(show)
     end
 end
 
+-- Debug: report which FRAME_LIST names currently resolve to real frames.
+-- Uses the same guard as Core's capture (frame and frame.GetNumPoints), so a
+-- "missing" entry is exactly one the addon would silently skip. Note that some
+-- entries are legitimately absent depending on game state (boss/arena frames,
+-- load-on-demand panels) — a name only indicates a typo if it never resolves in
+-- a context where the frame should exist.
+function CWF.ReportFrames()
+    local found, missing = 0, {}
+    for _, name in ipairs(CWF.FRAME_LIST) do
+        local f = _G[name]
+        if f and f.GetNumPoints then
+            found = found + 1
+        else
+            missing[#missing + 1] = name
+        end
+    end
+    print(string.format(
+        "|cff00aaff[CWF]|r Frames: %d/%d resolved.", found, #CWF.FRAME_LIST))
+    if #missing > 0 then
+        print("|cff00aaff[CWF]|r Not present now (state-dependent or bad name): "
+            .. table.concat(missing, ", "))
+    end
+end
+
 -- Slash commands
 SLASH_CENTERWOWFRAMES1 = "/cwf"
 SlashCmdList["CENTERWOWFRAMES"] = function(msg)
@@ -87,6 +111,7 @@ SlashCmdList["CENTERWOWFRAMES"] = function(msg)
         CWF.db.debugBorder = not CWF.db.debugBorder
         CWF.SetDebugBorder(CWF.db.debugBorder)
         print("|cff00aaff[CWF]|r Debug border " .. (CWF.db.debugBorder and "on" or "off") .. ".")
+        CWF.ReportFrames()
 
     elseif cmd == "reload" then
         CWF.CaptureAndApplyAll()
@@ -105,7 +130,7 @@ SlashCmdList["CENTERWOWFRAMES"] = function(msg)
         print("|cff00aaff[CWF]|r Commands:")
         print("  /cwf ratio 16:9   — set aspect ratio (e.g. 16:9, 21:9)")
         print("  /cwf toggle       — enable / disable")
-        print("  /cwf debug        — toggle orange border showing center zone")
+        print("  /cwf debug        — toggle center-zone border + list resolved/missing frames")
         print("  /cwf reload       — force-refresh all frame anchors")
         print("  /cwf status       — show current settings and screen ratio")
     end
