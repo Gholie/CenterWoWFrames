@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Gholie/CenterWoWFrames/compare/v1.0.0...v1.1.0) (2026-07-01)
+
+
+### Features
+
+* Update for WoW 12.0.7 and fix frame name/event handling ([#5](https://github.com/Gholie/CenterWoWFrames/issues/5)) ([efbca3a](https://github.com/Gholie/CenterWoWFrames/commit/efbca3a6eb55adf8e5064110f5126ccee34f063c))
+
 ## 1.0.0 (2026-04-27)
 
 
