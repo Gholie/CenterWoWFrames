@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Gholie/CenterWoWFrames/compare/v1.1.0...v1.1.1) (2026-07-05)
+
+
+### Bug Fixes
+
+* moved compact raid frame to physical screen edge ([#7](https://github.com/Gholie/CenterWoWFrames/issues/7)) ([2b85e64](https://github.com/Gholie/CenterWoWFrames/commit/2b85e64b48135b3205c5dd22309345a2ba2bddc7))
+
 ## [1.1.0](https://github.com/Gholie/CenterWoWFrames/compare/v1.0.0...v1.1.0) (2026-07-01)
 
 
