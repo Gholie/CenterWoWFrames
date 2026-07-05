@@ -60,7 +60,9 @@ CWF.FRAME_LIST = {
 
     -- Encounter / raid
     "EncounterBar",
-    "CompactRaidFrameManager",
+    -- CompactRaidFrameManager is intentionally NOT managed: its collapsed tab is
+    -- designed to hug the left screen edge, so re-anchoring it to CenterFrame
+    -- would float it in the middle of the play area.
 
     -- Alerts and floating UI
     "AlertFrame",
