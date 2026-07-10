@@ -10,21 +10,27 @@ local _, CWF = ...
 -- runs after the panel has already been anchored to UIParent.
 --
 -- Strategy: after Blizzard's pass, walk all currently-shown UIPanelWindows
--- entries with area "left" or "right" and shift the EDGE-MOST one of each
--- side horizontally by the CenterFrame inset. Runs synchronously (no timer
--- deferral) to avoid a one-frame blink at the unshifted position.
+-- entries with area "left" or "right", outermost panel first, and shift them
+-- inward by the CenterFrame inset — overlap-aware (see below). Runs
+-- synchronously (no timer deferral) to avoid a one-frame blink at the
+-- unshifted position.
 --
--- Why edge-most only, not every open panel: Blizzard's FramePositionDelegate
--- assigns each open panel a "slot" and positions slot 2+ panels relative to
--- the ACTUAL current edge of the panel in the preceding slot (roughly
--- leftPanel:GetRight() + spacing), not relative to UIParent directly. Only
--- the panel occupying the outermost slot on a side is anchored straight to
--- UIParent and needs our shift; every other panel on that side is already
--- correctly cascaded off the (now-shifted) edge-most panel's real position,
--- and shifting it too would double-count the inset. We used to also
--- force-center WorldMapFrame/AchievementFrame here (they register as area
--- "left" in some Midnight builds), but secretly moving a panel to screen
--- center while it was still occupying a left slot broke the delegate's slot
+-- Why overlap-aware, not a blind shift of every open panel: Blizzard's
+-- FramePositionDelegate assigns each open panel a "slot" and positions
+-- slot 2+ panels relative to the edge of the panel in the preceding slot
+-- (roughly leftPanel:GetRight() + spacing). Whether a given pass computed
+-- that edge from the panel's canonical (pre-shift) position or from its
+-- live (already-shifted) position cannot be assumed, so neither "shift
+-- everything" (double-counts the inset in the live case) nor "shift only
+-- the outermost panel" (leaves a gap-sized overlap in the canonical case)
+-- is safe. Instead: the outermost panel on a side always gets the shift;
+-- each panel behind it is shifted only if it would now overlap the
+-- (post-shift) panel ahead of it — i.e. Blizzard positioned it against
+-- pre-shift geometry this pass. Panels already cascaded off shifted
+-- geometry are left alone. We used to also force-center
+-- WorldMapFrame/AchievementFrame here (they register as area "left" in
+-- some Midnight builds), but secretly moving a panel to screen center
+-- while it was still occupying a left slot broke the delegate's slot
 -- accounting for every OTHER open panel — subsequent panels cascade off
 -- WorldMapFrame/AchievementFrame's real (centered) edge, not its registered
 -- slot position, scrambling their layout. Leaving them as ordinary left
@@ -35,10 +41,9 @@ local _, CWF = ...
 -- hooks fire for a single open event. panelState tracks the last Blizzard-
 -- assigned x and our applied shift per panel. On re-entry, the frame is
 -- already at baseX+shift — we detect that and leave it untouched rather than
--- doubling the offset. Panels that are open but not currently edge-most have
--- their panelState cleared each pass so a stale baseX/shift pair can't be
--- misapplied if they later become edge-most themselves (e.g. the panel ahead
--- of them closes).
+-- doubling the offset. Panels a pass decides not to shift have their
+-- panelState cleared so a stale baseX/shift pair can't be misapplied if they
+-- later need shifting themselves (e.g. the panel ahead of them closes).
 
 local function inset()
     return (UIParent:GetWidth() - CWF.CenterFrame:GetWidth()) / 2
@@ -89,20 +94,22 @@ local function asCandidate(name)
     return frame
 end
 
+-- Returns the screen-space horizontal delta actually applied (0 when nothing
+-- moved), so the caller can track post-shift edges without re-querying rects.
 local function shiftFrame(frame, name, sign)
     if not (isFrameLike(frame) and frame:IsShown() and frame:GetNumPoints() > 0) then
         panelState[name] = nil
-        return
+        return 0
     end
 
     local pt1, rel1, relPt1, x1, y1 = frame:GetPoint(1)
     if rel1 ~= UIParent then
         panelState[name] = nil
-        return
+        return 0
     end
 
     local px = inset()
-    if px < 0.5 then return end
+    if px < 0.5 then return 0 end
 
     local newShift = sign * px * UIParent:GetEffectiveScale() / frame:GetEffectiveScale()
 
@@ -136,6 +143,54 @@ local function shiftFrame(frame, name, sign)
     end)
     if ok then
         panelState[name] = {baseX = baseX, shift = newShift}
+        -- On idempotent re-entry x1 already ≈ baseX+shift, so this is ~0.
+        return (baseX + newShift - x1) * frame:GetEffectiveScale()
+    end
+    return 0
+end
+
+-- Shift one side's panels, outermost first. The outermost panel always gets
+-- the inset shift; each panel behind it is shifted only if it would now
+-- overlap the (post-shift) panel ahead of it — meaning Blizzard cascaded it
+-- off pre-shift geometry this pass. Edges are compared in screen space so
+-- panels with different scales compare correctly. sign is +1 for "left"
+-- (shift rightward, compare left edges), -1 for "right".
+local function processSide(names, sign)
+    local list, seen = {}, {}
+    for _, name in ipairs(names) do
+        if not seen[name] then
+            seen[name] = true
+            local frame = asCandidate(name)
+            local outer = frame and (sign == 1 and screenLeft(frame) or screenRight(frame))
+            if outer then
+                list[#list + 1] = {name = name, frame = frame, outer = outer}
+            else
+                -- Hidden, non-frame, or no computed rect yet: never a shift
+                -- target this pass, and stale state must not survive.
+                panelState[name] = nil
+            end
+        end
+    end
+
+    table.sort(list, function(a, b)
+        if sign == 1 then return a.outer < b.outer end
+        return a.outer > b.outer
+    end)
+
+    local prevInner
+    for i, entry in ipairs(list) do
+        local inner = (sign == 1) and screenRight(entry.frame) or screenLeft(entry.frame)
+        local needsShift = (i == 1)
+            or (sign == 1 and entry.outer < prevInner - 0.5)
+            or (sign == -1 and entry.outer > prevInner + 0.5)
+        if needsShift then
+            -- Track the applied delta instead of re-reading the rect, so we
+            -- don't depend on the layout engine recomputing it synchronously.
+            inner = inner + shiftFrame(entry.frame, entry.name, sign)
+        else
+            panelState[entry.name] = nil
+        end
+        prevInner = inner
     end
 end
 
@@ -147,9 +202,10 @@ local function DoAdjustOpenPanels()
     -- the screen width and shove every panel off-screen; bail instead.
     if not CWF.CenterFrame or CWF.CenterFrame:GetWidth() == 0 then return end
 
-    -- Gather every shown left/right candidate first, then only shift the
-    -- edge-most one per side (see header comment for why). Everything else
-    -- has its panelState cleared so stale base/shift pairs can't misfire.
+    -- Gather every shown left/right candidate, then process each side
+    -- outermost-first with the overlap-aware shift (see header comment).
+    -- Panels a pass doesn't shift get their panelState cleared so stale
+    -- base/shift pairs can't misfire.
     local leftNames, rightNames = {}, {}
 
     for name, attrs in pairs(UIPanelWindows) do
@@ -164,57 +220,11 @@ local function DoAdjustOpenPanels()
     end
 
     for _, name in ipairs(EXTRA_LEFT_PANELS) do
-        local alreadyListed = false
-        for _, existing in ipairs(leftNames) do
-            if existing == name then
-                alreadyListed = true
-                break
-            end
-        end
-        if not alreadyListed then
-            leftNames[#leftNames + 1] = name
-        end
+        leftNames[#leftNames + 1] = name  -- processSide dedupes
     end
 
-    local edgeLeftName, edgeLeftValue
-    for _, name in ipairs(leftNames) do
-        local frame = asCandidate(name)
-        if frame then
-            local left = screenLeft(frame)
-            if left and (not edgeLeftValue or left < edgeLeftValue) then
-                edgeLeftValue = left
-                edgeLeftName = name
-            end
-        end
-    end
-
-    local edgeRightName, edgeRightValue
-    for _, name in ipairs(rightNames) do
-        local frame = asCandidate(name)
-        if frame then
-            local right = screenRight(frame)
-            if right and (not edgeRightValue or right > edgeRightValue) then
-                edgeRightValue = right
-                edgeRightName = name
-            end
-        end
-    end
-
-    for _, name in ipairs(leftNames) do
-        if name == edgeLeftName then
-            shiftFrame(_G[name], name, 1)
-        else
-            panelState[name] = nil
-        end
-    end
-
-    for _, name in ipairs(rightNames) do
-        if name == edgeRightName then
-            shiftFrame(_G[name], name, -1)
-        else
-            panelState[name] = nil
-        end
-    end
+    processSide(leftNames, 1)
+    processSide(rightNames, -1)
 end
 
 CWF.AdjustOpenPanels = DoAdjustOpenPanels
