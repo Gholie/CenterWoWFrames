@@ -150,7 +150,17 @@ local function shiftFrame(frame, name, sign)
     if ok then
         panelState[name] = {baseX = baseX, shift = newShift}
         -- On idempotent re-entry x1 already ≈ baseX+shift, so this is ~0.
-        return (baseX + newShift - x1) * frame:GetEffectiveScale()
+        local delta = (baseX + newShift - x1) * frame:GetEffectiveScale()
+        -- Shifted panels occupy screen space that stock layout reserves for
+        -- HUD frames (unit frames, trackers), and repositioning never touches
+        -- frame levels — a low-level panel (e.g. PlayerSpellsFrame) ends up
+        -- rendering UNDER the HUD frames it now overlaps. Raise it within its
+        -- strata whenever we actually move it (not on idempotent re-entries,
+        -- so we don't perpetually fight click-to-raise ordering).
+        if math.abs(delta) > 0.5 and frame.Raise then
+            pcall(frame.Raise, frame)
+        end
+        return delta
     end
     return 0
 end
