@@ -92,19 +92,36 @@ SlashCmdList["CENTERWOWFRAMES"] = function(msg)
         if w and h and w > 0 and h > 0 then
             CWF.db.ratioWidth  = w
             CWF.db.ratioHeight = h
-            CWF.UpdateCenterFrameGeometry()
-            print(string.format("|cff00aaff[CWF]|r Ratio set to %d:%d.", w, h))
+            if InCombatLockdown() then
+                -- Resizing CenterFrame mid-combat would move protected frames
+                -- anchored to it and poke the panel manager — both blocked.
+                -- Defer to Core.lua's PLAYER_REGEN_ENABLED handler.
+                CWF._pendingGeometryUpdate = true
+                print(string.format("|cff00aaff[CWF]|r Ratio set to %d:%d — applying after combat.", w, h))
+            else
+                CWF.UpdateCenterFrameGeometry()
+                print(string.format("|cff00aaff[CWF]|r Ratio set to %d:%d.", w, h))
+            end
         else
             print("|cff00aaff[CWF]|r Usage: /cwf ratio 16:9 (both numbers must be > 0)")
         end
 
     elseif cmd == "toggle" then
         CWF.db.enabled = not CWF.db.enabled
-        CWF.UpdateCenterFrameGeometry()
-        if CWF.db.enabled then
-            print("|cff00aaff[CWF]|r Enabled.")
+        if InCombatLockdown() then
+            CWF._pendingGeometryUpdate = true
+            if CWF.db.enabled then
+                print("|cff00aaff[CWF]|r Enabled — applying after combat.")
+            else
+                print("|cff00aaff[CWF]|r Disabled — applying after combat.")
+            end
         else
-            print("|cff00aaff[CWF]|r Disabled — CenterFrame now matches UIParent.")
+            CWF.UpdateCenterFrameGeometry()
+            if CWF.db.enabled then
+                print("|cff00aaff[CWF]|r Enabled.")
+            else
+                print("|cff00aaff[CWF]|r Disabled — CenterFrame now matches UIParent.")
+            end
         end
 
     elseif cmd == "debug" then
@@ -115,7 +132,13 @@ SlashCmdList["CENTERWOWFRAMES"] = function(msg)
 
     elseif cmd == "reload" then
         CWF.CaptureAndApplyAll()
-        print("|cff00aaff[CWF]|r Anchors refreshed.")
+        if InCombatLockdown() then
+            -- CaptureAndApplyAll early-returned; it'll run for real on the
+            -- next PLAYER_REGEN_ENABLED.
+            print("|cff00aaff[CWF]|r In combat — refresh queued for after combat.")
+        else
+            print("|cff00aaff[CWF]|r Anchors refreshed.")
+        end
 
     elseif cmd == "status" then
         local screen = UIParent:GetWidth() / UIParent:GetHeight()

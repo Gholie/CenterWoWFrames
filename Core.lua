@@ -9,6 +9,19 @@ CWF.CenterFrame = CenterFrame
 -- [frameName] = {{point, relativeTo, relPoint, x, y}, ...}
 local storedAnchors = {}
 
+-- Set when CaptureAndApplyAll bails out on InCombatLockdown(); cleared once a
+-- capture actually runs to completion. Tells PLAYER_REGEN_ENABLED that
+-- storedAnchors (and CenterFrame's geometry) may be stale against the current
+-- layout, so a full re-capture is owed instead of a narrow reapply.
+local captureDropped = false
+
+-- Names of frames whose most recent Apply() failed (typically a protected
+-- frame skipped mid-combat). Reapplied individually on PLAYER_REGEN_ENABLED
+-- instead of rewriting every stored frame's anchors, which would revert
+-- legitimate mid-combat Blizzard repositioning (vehicle bar swaps, stance
+-- bar reflow, objective tracker collapse, ...).
+local failedApplies = {}
+
 function CWF.UpdateCenterFrameGeometry()
     local uiW = UIParent:GetWidth()
     local uiH = UIParent:GetHeight()
@@ -61,7 +74,14 @@ local function Apply(name, anchors)
     end
     local ok = pcall(applyPoints, frame, anchors)
     if not ok then
-        pcall(applyPoints, frame, backup)
+        local restored = pcall(applyPoints, frame, backup)
+        if not restored then
+            -- Both the new anchors and the pre-mutation backup failed to
+            -- apply (same underlying cause, e.g. mid-combat protection) —
+            -- the frame may now have a partial anchor set. Surface it once
+            -- rather than leaving a silently misplaced frame.
+            print("|cff00aaff[CWF]|r Failed to re-anchor " .. name .. "; frame may be misplaced until /reload.")
+        end
         return false
     end
     return true
@@ -71,7 +91,11 @@ end
 -- replaces UIParent with CenterFrame, and applies. Safe to call on every
 -- login, zone change, and Edit Mode update.
 function CWF.CaptureAndApplyAll()
-    if InCombatLockdown() then return end
+    if InCombatLockdown() then
+        captureDropped = true
+        return
+    end
+    captureDropped = false
     CWF.UpdateCenterFrameGeometry()
     for _, name in ipairs(CWF.FRAME_LIST) do
         local frame = _G[name]
@@ -79,17 +103,26 @@ function CWF.CaptureAndApplyAll()
             local anchors = Capture(frame)
             if Apply(name, anchors) then
                 storedAnchors[name] = anchors
+                failedApplies[name] = nil
+            else
+                failedApplies[name] = true
             end
         end
     end
 end
 
--- Re-applies already-stored anchors without re-reading from Blizzard.
--- Used after combat ends to catch any protected frames that were skipped.
+-- Re-applies stored anchors, but only for frames recorded in failedApplies
+-- (i.e. whose last Apply() failed — typically a protected frame skipped
+-- mid-combat). Frames that already applied cleanly are left untouched, so
+-- legitimate mid-combat Blizzard repositioning isn't stomped on combat exit.
+-- Does not re-read anchors from Blizzard.
 function CWF.ReapplyStored()
     if InCombatLockdown() then return end
-    for name, anchors in pairs(storedAnchors) do
-        Apply(name, anchors)
+    for name in pairs(failedApplies) do
+        local anchors = storedAnchors[name]
+        if anchors and Apply(name, anchors) then
+            failedApplies[name] = nil
+        end
     end
 end
 
@@ -131,13 +164,23 @@ events:SetScript("OnEvent", function(_, event, arg1)
         end
 
     elseif event == "PLAYER_REGEN_ENABLED" then
-        -- Logging in during combat causes the deferred CaptureAndApplyAll to
-        -- early-return, leaving storedAnchors empty. Detect that here and run
-        -- a full capture instead of replaying nothing.
-        if next(storedAnchors) then
-            CWF.ReapplyStored()
-        else
+        -- /cwf ratio or /cwf toggle during combat couldn't resize CenterFrame
+        -- safely; apply the deferred geometry change first so any capture or
+        -- reapply below lands frames against the correct, current size.
+        if CWF._pendingGeometryUpdate then
+            CWF._pendingGeometryUpdate = false
+            CWF.UpdateCenterFrameGeometry()
+        end
+
+        -- captureDropped means a capture request was lost to combat lockdown
+        -- (storedAnchors may be stale or empty); do a full re-capture instead
+        -- of a narrow reapply. Otherwise only retry frames that previously
+        -- failed (failedApplies) — everything else is left as Blizzard has
+        -- it, so legitimate mid-combat repositioning isn't reverted.
+        if captureDropped or not next(storedAnchors) then
             CWF.CaptureAndApplyAll()
+        else
+            CWF.ReapplyStored()
         end
         -- UI panels opened mid-combat were skipped by AdjustOpenPanels'
         -- combat-lockdown guard; re-shift them now.
