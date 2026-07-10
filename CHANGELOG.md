@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/Gholie/CenterWoWFrames/compare/v1.1.1...v1.1.2) (2026-07-10)
+
+
+### Bug Fixes
+
+* frame-behavior fixes from code review and panel-slot rework ([#9](https://github.com/Gholie/CenterWoWFrames/issues/9)) ([2b4fcb6](https://github.com/Gholie/CenterWoWFrames/commit/2b4fcb64bdedf765ca04e595fed166a37a5dae81))
+
 ## [1.1.1](https://github.com/Gholie/CenterWoWFrames/compare/v1.1.0...v1.1.1) (2026-07-05)
 
 
