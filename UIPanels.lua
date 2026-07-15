@@ -68,14 +68,16 @@ local SKIP_PANELS = {}
 
 -- Frames to treat as area="left" regardless of their UIPanelWindows entry.
 -- Used for frames not registered as left/right in all Midnight builds —
--- AuctionHouseFrame isn't registered at all, and AchievementFrame registers
--- as "doublewide" (or via frame attributes) rather than "left", so the
--- area scan in DoAdjustOpenPanels never sees them. Load-on-demand is fine:
--- tryHookOnShow retries on every ADDON_LOADED, and processSide just skips
--- names whose global doesn't resolve yet.
+-- AuctionHouseFrame isn't registered at all, while AchievementFrame and
+-- ProfessionsCustomerOrdersFrame register as "doublewide" (or via frame
+-- attributes) rather than "left", so the area scan in DoAdjustOpenPanels
+-- never sees them. Load-on-demand is fine: tryHookOnShow retries on every
+-- ADDON_LOADED, and processSide just skips names whose global doesn't
+-- resolve yet.
 local EXTRA_LEFT_PANELS = {
     "AuctionHouseFrame",
     "AchievementFrame",
+    "ProfessionsCustomerOrdersFrame",
 }
 
 -- Returns a frame's horizontal edges in screen space (i.e. corrected for its
