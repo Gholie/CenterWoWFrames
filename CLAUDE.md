@@ -39,3 +39,13 @@ Append to the `CWF.FRAME_LIST` table in `FrameList.lua`. Unknown/missing globals
 ## SavedVariables
 
 `CenterWoWFramesDB` (declared in the .toc). Defaults live in `CWF.DB_DEFAULTS` in `Config.lua`; `InitDB()` shallow-merges defaults into the saved table so adding a new default key is non-destructive for existing users.
+
+## Agent skills
+
+### Issue tracker
+
+Issues tracked as GitHub Issues on Gholie/CenterWoWFrames, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context layout — root `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.
