@@ -67,10 +67,6 @@ CWF.FRAME_LIST = {
     -- Alerts and floating UI
     "AlertFrame",
     "TalkingHeadFrame",
-    -- Renamed RaidBossEmoteFrame -> RaidWarningFrame in 12.1 (Blizzard_RaidWarning
-    -- addon, EditModeRaidWarningSystemTemplate). Keep both names listed: unknown/
-    -- missing globals are silently skipped, so this covers 12.0 and 12.1 clients
-    -- with one list until 12.0 support is dropped.
     "RaidBossEmoteFrame",
     "RaidWarningFrame",
 
