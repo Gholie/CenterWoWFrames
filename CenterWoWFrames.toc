@@ -1,4 +1,4 @@
-## Interface: 120007
+## Interface: 120100
 ## Title: CenterWoWFrames
 ## Notes: Anchors native UI frames to a configured aspect ratio, centered on screen.
 ## Author: Gholie

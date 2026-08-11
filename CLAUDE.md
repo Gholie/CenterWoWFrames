@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A World of Warcraft addon that re-anchors native Blizzard UI frames to a user-chosen aspect ratio (e.g. 16:9, 21:9), centered on screen. Targets retail WoW Patch 12.0 / Midnight (`## Interface: 120007`) — i.e. the post-"addon disarmament" API era.
+A World of Warcraft addon that re-anchors native Blizzard UI frames to a user-chosen aspect ratio (e.g. 16:9, 21:9), centered on screen. Targets retail WoW Patch 12.1 / Midnight (`## Interface: 120100`) — i.e. the post-"addon disarmament" API era.
 
 > **Keep this in sync:** whenever you bump `## Interface:` in `CenterWoWFrames.toc`, update the version referenced above in the same change. The `.toc` is the source of truth; this doc must not drift from it.
 

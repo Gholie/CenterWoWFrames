@@ -68,6 +68,7 @@ CWF.FRAME_LIST = {
     "AlertFrame",
     "TalkingHeadFrame",
     "RaidBossEmoteFrame",
+    "RaidWarningFrame",
 
     -- Misc
     "LootFrame",
