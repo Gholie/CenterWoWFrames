@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4](https://github.com/Gholie/CenterWoWFrames/compare/v1.1.3...v1.1.4) (2026-08-11)
+
+
+### Bug Fixes
+
+* bump to Interface 120100 and add RaidWarningFrame for 12.1 ([#13](https://github.com/Gholie/CenterWoWFrames/issues/13)) ([f5de86b](https://github.com/Gholie/CenterWoWFrames/commit/f5de86bfe0d94b171b8555b0cf106ada8cea90e9))
+
 ## [1.1.3](https://github.com/Gholie/CenterWoWFrames/compare/v1.1.2...v1.1.3) (2026-07-15)
 
 
