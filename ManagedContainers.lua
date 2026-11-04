@@ -10,6 +10,13 @@ local _, CWF = ...
 --    FramePositionDelegate re-pins it to UIParent TOPRIGHT in
 --    ManageRightFrameContainer() on every ManageFramePositions() call.
 --
+--  * Right action bars (MultiBarRight / MultiBarLeft) in their default
+--    position — EditModeManagerFrame:UpdateRightActionBarPositions() re-pins
+--    them to UIParent RIGHT (on display/scale changes, action bar visibility
+--    changes, ...) and then calls ManageFramePositions(). Without this they'd
+--    snap back to the screen edge while the right container (offset by the
+--    bars' width) stayed at the CenterFrame edge, splitting the layout.
+--
 --  * Bag frames (ContainerFrame1..N / ContainerFrameCombinedBags) — the
 --    first open bag is pinned to its parent's BOTTOMRIGHT by
 --    UpdateContainerFrameAnchors(); its parent is ContainerFrameContainer
@@ -61,28 +68,51 @@ local function reanchorToCenter(frame)
     end
     if not changed or not canMove(frame) then return end
 
-    pcall(function()
+    local backup = {}
+    for i = 1, frame:GetNumPoints() do backup[i] = {frame:GetPoint(i)} end
+    local function apply(list)
         frame:ClearAllPoints()
-        for _, p in ipairs(pts) do
+        for _, p in ipairs(list) do
             frame:SetPoint(p[1], p[2], p[3], p[4], p[5])
         end
-    end)
+    end
+    if not pcall(apply, pts) then
+        pcall(apply, backup)  -- never leave the frame anchorless
+    end
 end
 
-local function AdjustRightContainer()
+local function RightActionBars()
+    local em = _G.EditModeManagerFrame
+    if em and em.GetRightActionBars then
+        local ok, bars = pcall(em.GetRightActionBars, em)
+        if ok and type(bars) == "table" then return bars end
+    end
+    return {_G.MultiBarRight, _G.MultiBarLeft}
+end
+
+local function AdjustRightSide()
+    for _, bar in ipairs(RightActionBars()) do
+        reanchorToCenter(bar)
+    end
     reanchorToCenter(_G.RightManagedFrameContainer)
 end
 
+-- Read Blizzard's cached bag list directly instead of calling
+-- GetBagsShown(): that method fills the cache lazily, and if addon code is
+-- the one to fill it (e.g. at login before any bag opened) the cached table
+-- is tainted for every secure reader until Blizzard next marks it dirty.
+-- Inside the UpdateContainerFrameAnchors hook the cache was just filled by
+-- Blizzard; elsewhere a nil cache simply means there's nothing to fix yet.
 local function AdjustBags()
     local mgr = _G.ContainerFrameSettingsManager
-    if not (mgr and mgr.GetBagsShown) then return end
-    local ok, bags = pcall(mgr.GetBagsShown, mgr)
-    if not ok or type(bags) ~= "table" then return end
-    reanchorToCenter(bags[1])
+    local bags = type(mgr) == "table" and rawget(mgr, "bagsShown")
+    if type(bags) == "table" then
+        reanchorToCenter(bags[1])
+    end
 end
 
 function CWF.AdjustManagedContainers()
-    AdjustRightContainer()
+    AdjustRightSide()
     AdjustBags()
 end
 
@@ -90,7 +120,7 @@ end
 -- but retry on ADDON_LOADED in case a client flavor moves either into a
 -- load-on-demand addon. Each hook is installed at most once.
 local HOOKS = {
-    ManageFramePositions        = AdjustRightContainer,
+    ManageFramePositions        = AdjustRightSide,
     UpdateContainerFrameAnchors = AdjustBags,
 }
 local hooked = {}

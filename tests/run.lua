@@ -231,6 +231,25 @@ scenarios["right-managed container (boss frames) follows CenterFrame, deferred i
     check(rel == G.CWF_CenterFrame, "container should be fixed after combat")
 end
 
+scenarios["right action bars re-pinned by Edit Mode follow CenterFrame"] = function()
+    local env = loadAddon({}, standardFrames)
+    login(env)
+    local G = env.G
+    G.EditModeManagerFrame.UpdateRightActionBarPositions()
+    local _, rel = G.MultiBarRight:GetPoint(1)
+    check(rel == G.CWF_CenterFrame, "MultiBarRight should be re-anchored after Edit Mode re-pins it")
+    _, rel = G.RightManagedFrameContainer:GetPoint(1)
+    check(rel == G.CWF_CenterFrame, "right container should stay on CenterFrame")
+    env.combat = true  -- protected bars: skipped in combat, fixed on regen
+    G.EditModeManagerFrame.UpdateRightActionBarPositions()
+    _, rel = G.MultiBarRight:GetPoint(1)
+    check(rel == G.UIParent, "protected bar must not be moved in combat")
+    env.combat = false
+    env.fire("PLAYER_REGEN_ENABLED")
+    _, rel = G.MultiBarRight:GetPoint(1)
+    check(rel == G.CWF_CenterFrame, "bar should be fixed after combat")
+end
+
 scenarios["bags open inside the center zone"] = function()
     local env = loadAddon({}, standardFrames)
     login(env)
@@ -239,6 +258,9 @@ scenarios["bags open inside the center zone"] = function()
     local b1 = env.newFrame("ContainerFrame1", G.ContainerFrameContainer); b1:SetSize(200, 300)
     local b2 = env.newFrame("ContainerFrame2", G.ContainerFrameContainer); b2:SetSize(200, 300)
     env.bagsShown = { b1, b2 }
+    -- Outside Blizzard's own pass the addon must not fill the lazy cache.
+    env.ns.AdjustManagedContainers()
+    check(rawget(G.ContainerFrameSettingsManager, "bagsShown") == nil, "addon must not populate Blizzard's bagsShown cache")
     G.UpdateContainerFrameAnchors()
     local _, rel = b1:GetPoint(1)
     check(rel == G.CWF_CenterFrame, "first bag should anchor to CenterFrame")

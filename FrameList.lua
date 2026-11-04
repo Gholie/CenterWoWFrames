@@ -37,14 +37,13 @@ CWF.FRAME_LIST = {
     "PartyFrame",
     "CompactPartyFrame",
 
-    -- Boss / Arena. By default these live inside RightManagedFrameContainer
-    -- (handled by ManagedContainers.lua); listed so user-placed (Edit Mode)
-    -- copies anchored straight to UIParent are also re-anchored.
-    "Boss1TargetFrame",
-    "Boss2TargetFrame",
-    "Boss3TargetFrame",
-    "Boss4TargetFrame",
-    "Boss5TargetFrame",
+    -- Boss / Arena. Boss1-5TargetFrame are children of BossTargetFrameContainer
+    -- (never anchored to UIParent), so the container is what's listed. By
+    -- default both containers sit inside RightManagedFrameContainer (handled
+    -- by ManagedContainers.lua); listing them covers the user-placed case,
+    -- where Edit Mode reparents them to UIParent. CompactArenaFrame is
+    -- retail-only (not loaded in WoW Forever).
+    "BossTargetFrameContainer",
     "CompactArenaFrame",
 
     -- Minimap

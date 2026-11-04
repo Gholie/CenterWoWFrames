@@ -196,6 +196,16 @@ return function(opts)
         local rmc = newFrame("RightManagedFrameContainer", env.UIParent)
         rmc:SetSize(300, 800)
         rmc._points = { {"TOPRIGHT", env.UIParent, "TOPRIGHT", -45, -260} }
+        _G.EditModeManagerFrame = {
+            GetRightActionBars = function() return { _G.MultiBarRight, _G.MultiBarLeft } end,
+            -- Secure Edit Mode code: re-pins default-position right bars.
+            UpdateRightActionBarPositions = function()
+                if _G.MultiBarRight then
+                    _G.MultiBarRight._points = { {"RIGHT", env.UIParent, "RIGHT", -5, 0} }
+                end
+                ManageFramePositions()
+            end,
+        }
         _G.ManageFramePositions = function()
             -- FramePositionDelegate:ManageRightFrameContainer (secure; may
             -- run in combat). Bypasses the addon-side protection check.
@@ -206,12 +216,15 @@ return function(opts)
         cfc:SetSize(W, H)
         cfc._points = { {"TOPLEFT", env.UIParent, "TOPLEFT", 0, 0} }
         env.bagsShown = {}
-        _G.ContainerFrameSettingsManager = {
-            GetBagsShown = function() return env.bagsShown end,
-        }
+        _G.ContainerFrameSettingsManager = {}
+        function ContainerFrameSettingsManager:GetBagsShown()
+            if not self.bagsShown then self.bagsShown = env.bagsShown end
+            return self.bagsShown
+        end
+        function ContainerFrameSettingsManager:MarkBagsShownDirty() self.bagsShown = nil end
         _G.UpdateContainerFrameAnchors = function()
             local prev
-            for i, f in ipairs(env.bagsShown) do
+            for i, f in ipairs(ContainerFrameSettingsManager:GetBagsShown()) do
                 f._points = {}
                 if i == 1 then
                     f._points[1] = {"BOTTOMRIGHT", f._parent, "BOTTOMRIGHT", -4, 85}
