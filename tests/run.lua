@@ -206,8 +206,79 @@ scenarios["UI panels shift inward, cascade without overlap, reflow on close"] = 
     check(near(G.MerchantFrame:GetRight(), 3440 - inset - 16), "MerchantFrame right edge should shift inward")
 end
 
+scenarios["right-managed container (boss frames) follows CenterFrame, deferred in combat"] = function()
+    local env = loadAddon({}, standardFrames)
+    login(env)
+    local G = env.G
+    local inset = (3440 - 2560) / 2
+    local rmc = G.RightManagedFrameContainer
+    local _, rel = rmc:GetPoint(1)
+    check(rel == G.CWF_CenterFrame, "container should be re-anchored at login capture")
+    G.ManageFramePositions()
+    _, rel = rmc:GetPoint(1)
+    check(rel == G.CWF_CenterFrame, "container should be re-anchored after ManageFramePositions")
+    check(near(rmc:GetRight(), 3440 - inset - 45), "container right edge wrong: " .. tostring(rmc:GetRight()))
+    -- Encounter start: secure code re-pins it mid-combat; container is
+    -- implicitly protected (secure Boss unit buttons inside).
+    rmc._protected = true
+    env.combat = true
+    G.ManageFramePositions()
+    _, rel = rmc:GetPoint(1)
+    check(rel == G.UIParent, "protected container must not be moved in combat")
+    env.combat = false
+    env.fire("PLAYER_REGEN_ENABLED")
+    _, rel = rmc:GetPoint(1)
+    check(rel == G.CWF_CenterFrame, "container should be fixed after combat")
+end
+
+scenarios["bags open inside the center zone"] = function()
+    local env = loadAddon({}, standardFrames)
+    login(env)
+    local G = env.G
+    local inset = (3440 - 2560) / 2
+    local b1 = env.newFrame("ContainerFrame1", G.ContainerFrameContainer); b1:SetSize(200, 300)
+    local b2 = env.newFrame("ContainerFrame2", G.ContainerFrameContainer); b2:SetSize(200, 300)
+    env.bagsShown = { b1, b2 }
+    G.UpdateContainerFrameAnchors()
+    local _, rel = b1:GetPoint(1)
+    check(rel == G.CWF_CenterFrame, "first bag should anchor to CenterFrame")
+    check(near(b1:GetRight(), 3440 - inset - 4), "first bag right edge wrong: " .. tostring(b1:GetRight()))
+    _, rel = b2:GetPoint(1)
+    check(rel == b1, "later bags keep chaining off the first")
+    env.combat = true  -- bags aren't protected: still fixed in combat
+    G.UpdateContainerFrameAnchors()
+    _, rel = b1:GetPoint(1)
+    check(rel == G.CWF_CenterFrame, "bags opened in combat should still be centered")
+end
+
+scenarios["Forever spellbook: live UIPanelLayout-area attribute wins over UIPanelWindows"] = function()
+    local env = loadAddon({}, function(env)
+        standardFrames(env)
+        local f = env.newFrame("PlayerSpellsFrame", env.UIParent); f:SetSize(400, 500)
+        UIPanelWindows.PlayerSpellsFrame = { area = "centerOrLeft" }
+    end)
+    login(env)
+    local G = env.G
+    local f = G.PlayerSpellsFrame
+    local inset = (3440 - 2560) / 2
+    local function blizzardLeftSlot() f._points = { {"TOPLEFT", G.UIParent, "TOPLEFT", 16, -100} } end
+
+    -- Not yet shown through the panel manager: no layout attributes, so the
+    -- registered "centerOrLeft" applies and it is left alone.
+    blizzardLeftSlot()
+    env.ns.AdjustOpenPanels()
+    check(near(f:GetLeft(), 16), "centerOrLeft panel must not be shifted, left=" .. tostring(f:GetLeft()))
+
+    -- Minimized spellbook: SetUIPanelAttribute flipped the live area to "left".
+    f:SetAttribute("UIPanelLayout-defined", true)
+    f:SetAttribute("UIPanelLayout-area", "left")
+    blizzardLeftSlot()
+    env.ns.AdjustOpenPanels()
+    check(near(f:GetLeft(), inset + 16), "minimized spellbook should shift as a left panel, left=" .. tostring(f:GetLeft()))
+end
+
 scenarios["loads cleanly on a client without Edit Mode or panel manager"] = function()
-    local env = loadAddon({ noEditMode = true, noPanelManager = true, noSecretValues = true }, standardFrames)
+    local env = loadAddon({ noEditMode = true, noPanelManager = true, noSecretValues = true, noManagedFrames = true }, standardFrames)
     login(env)
     local _, rel = env.G.PlayerFrame:GetPoint(1)
     check(rel == env.G.CWF_CenterFrame, "core re-anchoring should still work")

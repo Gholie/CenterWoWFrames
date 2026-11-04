@@ -10,3 +10,4 @@ FrameList.lua
 Config.lua
 Core.lua
 UIPanels.lua
+ManagedContainers.lua

@@ -224,6 +224,23 @@ local function processSide(names, sign)
     end
 end
 
+-- The area the FramePositionDelegate actually uses. It mirrors Blizzard's
+-- local GetUIPanelAttribute: once a panel has been shown its layout lives in
+-- frame attributes ("UIPanelLayout-<key>"), and SetUIPanelAttribute updates
+-- only those, never UIPanelWindows. WoW Forever relies on this: its
+-- PlayerSpellsFrame is registered as "centerOrLeft" but flips its live area
+-- to "left" whenever the spellbook tab is minimized (the default on first
+-- open), so reading UIPanelWindows alone would never shift it.
+local function panelArea(name, attrs)
+    local frame = _G[name]
+    if isFrameLike(frame) and frame.GetAttribute
+        and frame:GetAttribute("UIPanelLayout-defined") then
+        local area = frame:GetAttribute("UIPanelLayout-area")
+        if area then return area end
+    end
+    return attrs and attrs.area
+end
+
 local function DoAdjustOpenPanels()
     if InCombatLockdown() then return end
     if not UIPanelWindows then return end
@@ -240,7 +257,7 @@ local function DoAdjustOpenPanels()
 
     for name, attrs in pairs(UIPanelWindows) do
         if not SKIP_PANELS[name] then
-            local area = attrs and attrs.area
+            local area = panelArea(name, attrs)
             if area == "left" then
                 leftNames[#leftNames + 1] = name
             elseif area == "right" then

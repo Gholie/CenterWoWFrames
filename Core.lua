@@ -109,6 +109,9 @@ function CWF.CaptureAndApplyAll()
             end
         end
     end
+    -- Containers Blizzard re-pins from code (right-managed frames, bags);
+    -- see ManagedContainers.lua.
+    if CWF.AdjustManagedContainers then CWF.AdjustManagedContainers() end
 end
 
 -- Re-applies stored anchors, but only for frames recorded in failedApplies
@@ -196,7 +199,10 @@ events:SetScript("OnEvent", function(_, event, arg1)
             CWF.ReapplyStored()
         end
         -- UI panels opened mid-combat were skipped by AdjustOpenPanels'
-        -- combat-lockdown guard; re-shift them now.
+        -- combat-lockdown guard; re-shift them now. Same for managed
+        -- containers (e.g. the right container holding Boss frames, which
+        -- is implicitly protected and Blizzard re-pins at encounter start).
         if CWF.AdjustOpenPanels then CWF.AdjustOpenPanels() end
+        if CWF.AdjustManagedContainers then CWF.AdjustManagedContainers() end
     end
 end)

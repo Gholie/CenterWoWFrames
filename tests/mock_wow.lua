@@ -6,7 +6,8 @@
 --   opts.screenW / opts.screenH : UIParent size (default 3440 x 1440 -> 21:9)
 --   opts.noEditMode             : client without EDIT_MODE_LAYOUTS_UPDATED
 --   opts.noPanelManager         : client without ShowUIPanel & friends
---   opts.noSecretValues         : client without issecretvalue (default true)
+--   opts.noSecretValues         : client without issecretvalue
+--   opts.noManagedFrames        : client without ManageFramePositions / bag anchoring
 
 return function(opts)
     opts = opts or {}
@@ -88,6 +89,11 @@ return function(opts)
         self._events[e] = true
         env.eventFrames[self] = true
     end
+    function Frame:GetAttribute(k) return self._attrs and self._attrs[k] end
+    function Frame:SetAttribute(k, v) self._attrs = self._attrs or {}; self._attrs[k] = v end
+    function Frame:IsProtected() return self._protected end
+    function Frame:SetScale(s) self._scale = s end
+    function Frame:GetParent() return self._parent end
     function Frame:CreateTexture()
         local t = newFrame(nil, self)
         function t.SetColorTexture() end
@@ -182,6 +188,38 @@ return function(opts)
             f._shown = false
             for i, o in ipairs(openOrder) do if o == f then table.remove(openOrder, i) break end end
             UpdateUIPanelPositions()
+        end
+    end
+
+    ------------------------------------- managed containers (Mainline)
+    if not opts.noManagedFrames then
+        local rmc = newFrame("RightManagedFrameContainer", env.UIParent)
+        rmc:SetSize(300, 800)
+        rmc._points = { {"TOPRIGHT", env.UIParent, "TOPRIGHT", -45, -260} }
+        _G.ManageFramePositions = function()
+            -- FramePositionDelegate:ManageRightFrameContainer (secure; may
+            -- run in combat). Bypasses the addon-side protection check.
+            rmc._points = { {"TOPRIGHT", env.UIParent, "TOPRIGHT", -45, -260} }
+            UpdateContainerFrameAnchors()
+        end
+        local cfc = newFrame("ContainerFrameContainer", env.UIParent)
+        cfc:SetSize(W, H)
+        cfc._points = { {"TOPLEFT", env.UIParent, "TOPLEFT", 0, 0} }
+        env.bagsShown = {}
+        _G.ContainerFrameSettingsManager = {
+            GetBagsShown = function() return env.bagsShown end,
+        }
+        _G.UpdateContainerFrameAnchors = function()
+            local prev
+            for i, f in ipairs(env.bagsShown) do
+                f._points = {}
+                if i == 1 then
+                    f._points[1] = {"BOTTOMRIGHT", f._parent, "BOTTOMRIGHT", -4, 85}
+                else
+                    f._points[1] = {"BOTTOMRIGHT", prev, "TOPRIGHT", 0, 5}
+                end
+                prev = f
+            end
         end
     end
 
