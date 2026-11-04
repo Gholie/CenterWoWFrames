@@ -26,7 +26,11 @@ CenterWoWFrames places an invisible anchor frame in the center of your screen, s
 ## Installation
 
 1. Download the latest release zip.
-2. Extract the `CenterWoWFrames` folder into your client's AddOns folder: `<WoW>/_retail_/Interface/AddOns/` for retail. For WoW Forever, use that client's own `Interface/AddOns/` folder. If you're not sure where it is, use "Show in Explorer" in the Battle.net launcher.
+2. Extract the `CenterWoWFrames` folder into your client's AddOns folder:
+   - Retail: `<WoW>/_retail_/Interface/AddOns/`
+   - WoW Forever: `<WoW>/_forever_/Interface/AddOns/`
+
+   The same download works for both; each client picks its own `.toc`.
 3. Reload the UI or restart the game client.
 
 ## Usage

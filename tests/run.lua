@@ -42,7 +42,7 @@ end
 
 -- Load the addon into a fresh sandbox. setup(env) runs after the mock is
 -- built but before addon files load (create Blizzard frames there).
-local function loadAddon(opts, setup)
+local function loadAddon(opts, setup, tocName)
     local sandbox = setmetatable({}, { __index = _G })
     sandbox._G = sandbox
 
@@ -53,7 +53,8 @@ local function loadAddon(opts, setup)
 
     if setup then setfenv(setup, sandbox); setup(env) end
 
-    local toc = assert(parseToc(ADDON .. ".toc"), "main .toc missing")
+    tocName = tocName or (ADDON .. ".toc")
+    local toc = assert(parseToc(tocName), tocName .. " missing")
     local ns = {}
     for _, file in ipairs(toc.files) do
         local chunk, err = loadfile(file)
@@ -91,33 +92,68 @@ end
 
 local scenarios = {}
 
-scenarios["toc files are well-formed and reference existing files"] = function()
-    -- Probe known flavor suffixes rather than shelling out, so this runs in
-    -- embedded Lua runtimes without io.popen.
-    local tocs = {}
-    for _, suffix in ipairs({ "", "_Mainline", "_Camelot", "_Forever", "_Standard",
-                              "_Vanilla", "_Classic", "_Mists", "_Cata" }) do
-        local name = ADDON .. suffix .. ".toc"
-        if readFile(name) then table.insert(tocs, name) end
-    end
-    check(#tocs > 0, "no .toc files found")
-    local mainFiles
-    for _, name in ipairs(tocs) do
-        check(name:sub(1, #ADDON) == ADDON, name .. ": TOC must be named after the addon folder")
+-- Flavor TOCs the client picks over the unsuffixed one. Interface numbers
+-- each must use (Lua pattern), and the client they target.
+local FLAVOR_TOCS = {
+    { suffix = "_Forever", interface = "^16%d%d%d$", client = "WoW Forever" },
+}
+
+scenarios["toc files are well-formed and deploy to every client"] = function()
+    local mainName = ADDON .. ".toc"
+    local main = parseToc(mainName)
+    check(main ~= nil, "main " .. mainName .. " missing")
+    if not main then return end
+
+    local tocs = { { name = mainName, toc = main } }
+    for _, flavor in ipairs(FLAVOR_TOCS) do
+        local name = ADDON .. flavor.suffix .. ".toc"
         local toc = parseToc(name)
-        check(#toc.interface > 0, name .. ": missing ## Interface")
+        check(toc ~= nil, name .. " missing (needed for " .. flavor.client .. ")")
+        if toc then
+            table.insert(tocs, { name = name, toc = toc })
+            check(#toc.interface > 0, name .. ": missing ## Interface")
+            local mainSet = {}
+            for _, n in ipairs(main.interface) do mainSet[n] = true end
+            for _, n in ipairs(toc.interface) do
+                check(n:match(flavor.interface) ~= nil, name .. ": interface " .. n .. " is not a " .. flavor.client .. " interface")
+                -- BigWigsMods/packager only reads game versions from the
+                -- unsuffixed TOC (and _Camelot, not _Forever). If the main
+                -- TOC drops a flavor's interface, releases silently stop
+                -- being uploaded for that client.
+                check(mainSet[n], mainName .. " must also list " .. n .. " so the packager uploads for " .. flavor.client)
+            end
+        end
+    end
+
+    local hasRetail = false
+    for _, n in ipairs(main.interface) do
+        if n:match("^1[1-9]%d%d%d%d$") then hasRetail = true end
+    end
+    check(hasRetail, mainName .. ": no retail (12xxxx-style) interface")
+
+    for _, entry in ipairs(tocs) do
+        local name, toc = entry.name, entry.toc
         for _, n in ipairs(toc.interface) do
             check(n:match("^%d+$") ~= nil, name .. ": non-numeric interface '" .. n .. "'")
         end
-        check(toc.directives.SavedVariables == "CenterWoWFramesDB", name .. ": SavedVariables mismatch")
+        for _, key in ipairs({ "Title", "SavedVariables", "Version", "X-Curse-Project-ID" }) do
+            check(toc.directives[key] == main.directives[key], name .. ": ## " .. key .. " differs from " .. mainName)
+        end
+        check(#toc.files > 0, name .. ": lists no files")
         for _, file in ipairs(toc.files) do
             check(readFile(file) ~= nil, name .. ": lists missing file " .. file)
         end
-        local joined = table.concat(toc.files, ",")
-        if mainFiles then
-            check(joined == mainFiles, name .. ": file list differs from " .. tocs[1])
-        else
-            mainFiles = joined
+    end
+end
+
+scenarios["every flavor TOC loads and re-anchors"] = function()
+    for _, flavor in ipairs(FLAVOR_TOCS) do
+        local name = ADDON .. flavor.suffix .. ".toc"
+        if readFile(name) then
+            local env = loadAddon({}, standardFrames, name)
+            login(env)
+            local _, rel = env.G.PlayerFrame:GetPoint(1)
+            check(rel == env.G.CWF_CenterFrame, name .. ": PlayerFrame should anchor to CenterFrame")
         end
     end
 end

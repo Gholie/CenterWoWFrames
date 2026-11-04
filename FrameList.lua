@@ -17,15 +17,9 @@ CWF.FRAME_LIST = {
     "StanceBar",
     "PossessActionBar",
     "MultiCastActionBarFrame",  -- shaman totem bar (WoW Forever only)
-    -- Micro menu + bags: in retail's default layout MicroMenuContainer and
-    -- BagsBar both anchor to MicroButtonAndBagsBar, which is the frame
-    -- actually pinned to UIParent BOTTOMRIGHT. MicroMenu itself is a child
-    -- of MicroMenuContainer (never anchored to UIParent), so it's not listed.
-    -- In WoW Forever's classic layout MicroMenuContainer is BOTTOM-anchored
-    -- and the others chain off it, so these are no-ops there unless moved.
-    "MicroButtonAndBagsBar",
-    "MicroMenuContainer",
-    "BagsBar",
+    -- Micro menu and bag bar (MicroButtonAndBagsBar / MicroMenuContainer /
+    -- BagsBar) are deliberately NOT managed: players position them with
+    -- Edit Mode, and the default spot hugging the screen corner is intended.
     "OverrideActionBar",
     "ExtraActionBarFrame",
     "ZoneAbilityFrame",
