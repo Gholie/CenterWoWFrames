@@ -23,7 +23,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: BigWigsMods/packager@6d50adb6e8517eefef63f4afb16a6518166a6b28 # v2.5.1
+      - uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0 # v2.6.1 (first release with WoW Forever / 16xxx support)
         env:
           CF_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
           GITHUB_OAUTH: ${{ steps.token.outputs.token }}

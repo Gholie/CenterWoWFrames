@@ -127,13 +127,26 @@ function CWF.ReapplyStored()
 end
 
 local events = CreateFrame("Frame")
+
+-- RegisterEvent hard-errors on an event name the running client doesn't
+-- know ("Attempt to register unknown event"), which would abort this file
+-- mid-load. Not every client flavor this addon loads in has every event
+-- (e.g. EDIT_MODE_LAYOUTS_UPDATED only exists where Blizzard_EditMode does),
+-- so register optional events defensively.
+local function RegisterOptionalEvent(frame, event)
+    if C_EventUtils and C_EventUtils.IsEventValid and not C_EventUtils.IsEventValid(event) then
+        return false
+    end
+    return (pcall(frame.RegisterEvent, frame, event))
+end
+
 events:RegisterEvent("ADDON_LOADED")
 events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
-events:RegisterEvent("UI_SCALE_CHANGED")
-events:RegisterEvent("DISPLAY_SIZE_CHANGED")
-events:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
+RegisterOptionalEvent(events, "UI_SCALE_CHANGED")
+RegisterOptionalEvent(events, "DISPLAY_SIZE_CHANGED")
+RegisterOptionalEvent(events, "EDIT_MODE_LAYOUTS_UPDATED")
 
 events:SetScript("OnEvent", function(_, event, arg1)
     if event == "ADDON_LOADED" then
