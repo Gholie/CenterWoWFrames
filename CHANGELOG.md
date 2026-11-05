@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Gholie/CenterWoWFrames/compare/v1.1.4...v1.2.0) (2026-11-05)
+
+
+### Features
+
+* support WoW Forever alongside retail ([#15](https://github.com/Gholie/CenterWoWFrames/issues/15)) ([5eeae8d](https://github.com/Gholie/CenterWoWFrames/commit/5eeae8d96d621e59e247489742632f946887e596))
+
 ## [1.1.4](https://github.com/Gholie/CenterWoWFrames/compare/v1.1.3...v1.1.4) (2026-08-11)
 
 
