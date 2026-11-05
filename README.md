@@ -14,17 +14,23 @@ CenterWoWFrames places an invisible anchor frame in the center of your screen, s
 
 - Works with Edit Mode - your customizations are respected and preserved.
 - Works with UI panels (Character, Spellbook, Bank, etc.) - they shift inward to stay within the center zone.
+- Bags, boss frames, arena frames and other right-side "managed" frames follow the center zone too.
 - Safe in combat - protected frames are re-anchored automatically after combat ends.
 - No UIParent modification - uses only public API.
 
 ## Requirements
 
-- World of Warcraft retail, patch 12.0 (Midnight) or later.
+- World of Warcraft retail, patch 12.0 (Midnight) or later, **or**
+- World of Warcraft: Forever (patch 1.60 or later).
 
 ## Installation
 
 1. Download the latest release zip.
-2. Extract the `CenterWoWFrames` folder into `<WoW>/_retail_/Interface/AddOns/`.
+2. Extract the `CenterWoWFrames` folder into your client's AddOns folder:
+   - Retail: `<WoW>/_retail_/Interface/AddOns/`
+   - WoW Forever: `<WoW>/_forever_/Interface/AddOns/`
+
+   The same download works for both; each client picks its own `.toc`.
 3. Reload the UI or restart the game client.
 
 ## Usage
@@ -56,4 +62,12 @@ Settings are saved per account across sessions.
 **Check what ratio your screen actually is:**
 ```
 /cwf status
+```
+
+## Development
+
+Real testing happens in-game, but there's an offline smoke-test harness that mocks the parts of the WoW API the addon uses:
+
+```
+lua5.1 tests/run.lua
 ```

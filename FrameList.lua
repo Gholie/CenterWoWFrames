@@ -1,7 +1,8 @@
 local _, CWF = ...
 
 -- Native Blizzard frames to re-anchor relative to the virtual center frame.
--- Unknown or missing frame names are silently skipped.
+-- Unknown or missing frame names are silently skipped, so one list serves
+-- both retail and WoW Forever (some entries exist in only one client).
 CWF.FRAME_LIST = {
     -- Action bars (protected in combat — applied on PLAYER_REGEN_ENABLED if skipped)
     "MainActionBar",
@@ -15,8 +16,10 @@ CWF.FRAME_LIST = {
     "PetActionBar",
     "StanceBar",
     "PossessActionBar",
-    "MicroMenu",
-    "BagsBar",
+    "MultiCastActionBarFrame",  -- shaman totem bar (WoW Forever only)
+    -- Micro menu and bag bar (MicroButtonAndBagsBar / MicroMenuContainer /
+    -- BagsBar) are deliberately NOT managed: players position them with
+    -- Edit Mode, and the default spot hugging the screen corner is intended.
     "OverrideActionBar",
     "ExtraActionBarFrame",
     "ZoneAbilityFrame",
@@ -28,13 +31,14 @@ CWF.FRAME_LIST = {
     "PartyFrame",
     "CompactPartyFrame",
 
-    -- Boss / Arena
-    "Boss1TargetFrame",
-    "Boss2TargetFrame",
-    "Boss3TargetFrame",
-    "Boss4TargetFrame",
-    "Boss5TargetFrame",
-    "ArenaEnemyFrames",
+    -- Boss / Arena. Boss1-5TargetFrame are children of BossTargetFrameContainer
+    -- (never anchored to UIParent), so the container is what's listed. By
+    -- default both containers sit inside RightManagedFrameContainer (handled
+    -- by ManagedContainers.lua); listing them covers the user-placed case,
+    -- where Edit Mode reparents them to UIParent. CompactArenaFrame is
+    -- retail-only (not loaded in WoW Forever).
+    "BossTargetFrameContainer",
+    "CompactArenaFrame",
 
     -- Minimap
     "MinimapCluster",
@@ -49,10 +53,12 @@ CWF.FRAME_LIST = {
     -- Auras
     "BuffFrame",
     "DebuffFrame",
-    "TemporaryEnchantFrame",
 
-    -- Cast bars
+    -- Cast bars / swing timers (swing timers are WoW Forever only)
     "PlayerCastingBarFrame",
+    "SwingTimerMainHandFrame",
+    "SwingTimerOffHandFrame",
+    "SwingTimerRangedFrame",
 
     -- Status / XP / Rep / Honor bars (all children of StatusTrackingBarManager;
     -- the manager itself is the anchored parent frame)
@@ -67,12 +73,12 @@ CWF.FRAME_LIST = {
     -- Alerts and floating UI
     "AlertFrame",
     "TalkingHeadFrame",
-    "RaidBossEmoteFrame",
     "RaidWarningFrame",
 
     -- Misc
     "LootFrame",
     "DurabilityFrame",
+    "VehicleSeatIndicator",
     "ZoneTextFrame",
     "SubZoneTextFrame",
     "UIErrorsFrame",

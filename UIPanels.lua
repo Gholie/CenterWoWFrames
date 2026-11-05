@@ -80,17 +80,28 @@ local EXTRA_LEFT_PANELS = {
     "ProfessionsCustomerOrdersFrame",
 }
 
+-- Midnight-era clients can hand back "secret" numbers for frame geometry
+-- that was derived from a secret value (a frame's "secret aspect"). Those
+-- can't be compared or used in arithmetic, so treat them as "no usable
+-- rect" rather than erroring the whole pass. issecretvalue is absent in
+-- clients without the Secret Values system; there every number is plain.
+local function usable(v)
+    if v == nil then return false end
+    if issecretvalue and issecretvalue(v) then return false end
+    return true
+end
+
 -- Returns a frame's horizontal edges in screen space (i.e. corrected for its
 -- own effective scale), or nil if the frame has no computed rect yet.
 local function screenLeft(frame)
     local left = frame:GetLeft()
-    if not left then return nil end
+    if not usable(left) then return nil end
     return left * frame:GetEffectiveScale()
 end
 
 local function screenRight(frame)
     local right = frame:GetRight()
-    if not right then return nil end
+    if not usable(right) then return nil end
     return right * frame:GetEffectiveScale()
 end
 
@@ -111,7 +122,7 @@ local function shiftFrame(frame, name, sign)
     end
 
     local pt1, rel1, relPt1, x1, y1 = frame:GetPoint(1)
-    if rel1 ~= UIParent then
+    if rel1 ~= UIParent or not usable(x1) then
         panelState[name] = nil
         return 0
     end
@@ -139,7 +150,7 @@ local function shiftFrame(frame, name, sign)
     pts[1] = {pt1, rel1, relPt1, baseX + newShift, y1}
     for i = 2, n do
         local pt, rel, relPt, x, y = frame:GetPoint(i)
-        if rel == UIParent then x = x + newShift end
+        if rel == UIParent and usable(x) then x = x + newShift end
         pts[i] = {pt, rel, relPt, x, y}
     end
 
@@ -180,8 +191,9 @@ local function processSide(names, sign)
             seen[name] = true
             local frame = asCandidate(name)
             local outer = frame and (sign == 1 and screenLeft(frame) or screenRight(frame))
-            if outer then
-                list[#list + 1] = {name = name, frame = frame, outer = outer}
+            local inner = outer and (sign == 1 and screenRight(frame) or screenLeft(frame))
+            if outer and inner then
+                list[#list + 1] = {name = name, frame = frame, outer = outer, inner = inner}
             else
                 -- Hidden, non-frame, or no computed rect yet: never a shift
                 -- target this pass, and stale state must not survive.
@@ -197,7 +209,7 @@ local function processSide(names, sign)
 
     local prevInner
     for i, entry in ipairs(list) do
-        local inner = (sign == 1) and screenRight(entry.frame) or screenLeft(entry.frame)
+        local inner = entry.inner
         local needsShift = (i == 1)
             or (sign == 1 and entry.outer < prevInner - 0.5)
             or (sign == -1 and entry.outer > prevInner + 0.5)
@@ -210,6 +222,23 @@ local function processSide(names, sign)
         end
         prevInner = inner
     end
+end
+
+-- The area the FramePositionDelegate actually uses. It mirrors Blizzard's
+-- local GetUIPanelAttribute: once a panel has been shown its layout lives in
+-- frame attributes ("UIPanelLayout-<key>"), and SetUIPanelAttribute updates
+-- only those, never UIPanelWindows. WoW Forever relies on this: its
+-- PlayerSpellsFrame is registered as "centerOrLeft" but flips its live area
+-- to "left" whenever the spellbook tab is minimized (the default on first
+-- open), so reading UIPanelWindows alone would never shift it.
+local function panelArea(name, attrs)
+    local frame = _G[name]
+    if isFrameLike(frame) and frame.GetAttribute
+        and frame:GetAttribute("UIPanelLayout-defined") then
+        local area = frame:GetAttribute("UIPanelLayout-area")
+        if area then return area end
+    end
+    return attrs and attrs.area
 end
 
 local function DoAdjustOpenPanels()
@@ -228,7 +257,7 @@ local function DoAdjustOpenPanels()
 
     for name, attrs in pairs(UIPanelWindows) do
         if not SKIP_PANELS[name] then
-            local area = attrs and attrs.area
+            local area = panelArea(name, attrs)
             if area == "left" then
                 leftNames[#leftNames + 1] = name
             elseif area == "right" then
@@ -247,9 +276,14 @@ end
 
 CWF.AdjustOpenPanels = DoAdjustOpenPanels
 
-hooksecurefunc("ShowUIPanel",            DoAdjustOpenPanels)
-hooksecurefunc("HideUIPanel",            DoAdjustOpenPanels)
-hooksecurefunc("UpdateUIPanelPositions", DoAdjustOpenPanels)
+-- hooksecurefunc errors if the global isn't a function. Guard so a client
+-- flavor that renames/removes one of these wrappers degrades to "panels
+-- aren't shifted" instead of aborting the file (and the OnShow hooks below).
+for _, fname in ipairs({"ShowUIPanel", "HideUIPanel", "UpdateUIPanelPositions"}) do
+    if type(_G[fname]) == "function" then
+        hooksecurefunc(fname, DoAdjustOpenPanels)
+    end
+end
 
 -- EXTRA_LEFT_PANELS frames (e.g. AuctionHouseFrame) are load-on-demand and can
 -- open via NPC Show() calls that bypass ShowUIPanel entirely. Hook
