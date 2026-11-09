@@ -155,9 +155,9 @@ local function shiftFrame(frame, name, sign)
     end
 
     local ok = pcall(function()
-        frame:ClearAllPoints()
+        CWF.ClearAllPoints(frame)
         for _, p in ipairs(pts) do
-            frame:SetPoint(p[1], p[2], p[3], p[4], p[5])
+            CWF.SetPoint(frame, p[1], p[2], p[3], p[4], p[5])
         end
     end)
     if ok then

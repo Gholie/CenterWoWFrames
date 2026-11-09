@@ -6,6 +6,33 @@ local ADDON_NAME, CWF = ...
 local CenterFrame = CreateFrame("Frame", "CWF_CenterFrame", UIParent)
 CWF.CenterFrame = CenterFrame
 
+-- Edit Mode system frames (PlayerFrame, PartyFrame, action bars, BuffFrame,
+-- ...) replace SetPoint/ClearAllPoints with Lua overrides
+-- (EditModeSystemMixin:OnSystemLoad) that also write Edit Mode state:
+-- EditModeManagerFrame.editModeSystemAnchorDirty and the frame's snap
+-- bookkeeping. Called from addon code, those writes are tainted, and the
+-- secure Edit Mode code that later reads them runs tainted: entering Edit
+-- Mode then raises ADDON_ACTION_FORBIDDEN on TargetUnit() and compact unit
+-- frames fail to compare secret health colours. Always call the native
+-- widget methods, which only move the frame. Snap state stays correct:
+-- anchors are rewritten only from UIParent to CenterFrame, and neither can
+-- be snapped to, so the frame's snap target is the same before and after.
+local function nativeMethod(frame, name)
+    local mt = getmetatable(frame)
+    local index = type(mt) == "table" and mt.__index
+    local fn = type(index) == "table" and rawget(index, name)
+    if type(fn) == "function" then return fn end
+    return frame[name .. "Base"] or frame[name]
+end
+
+function CWF.ClearAllPoints(frame)
+    nativeMethod(frame, "ClearAllPoints")(frame)
+end
+
+function CWF.SetPoint(frame, point, relativeTo, relativePoint, x, y)
+    nativeMethod(frame, "SetPoint")(frame, point, relativeTo, relativePoint, x, y)
+end
+
 -- [frameName] = {{point, relativeTo, relPoint, x, y}, ...}
 local storedAnchors = {}
 
@@ -57,9 +84,9 @@ local function Capture(frame)
 end
 
 local function applyPoints(frame, anchors)
-    frame:ClearAllPoints()
+    CWF.ClearAllPoints(frame)
     for _, a in ipairs(anchors) do
-        frame:SetPoint(a[1], a[2], a[3], a[4], a[5])
+        CWF.SetPoint(frame, a[1], a[2], a[3], a[4], a[5])
     end
 end
 
