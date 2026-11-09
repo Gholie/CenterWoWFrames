@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/Gholie/CenterWoWFrames/compare/v1.2.0...v1.2.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* stop tainting Edit Mode when re-anchoring its frames ([#17](https://github.com/Gholie/CenterWoWFrames/issues/17)) ([06da2d1](https://github.com/Gholie/CenterWoWFrames/commit/06da2d1cd452f6b35a1a134af7a779c1395cc424))
+
 ## [1.2.0](https://github.com/Gholie/CenterWoWFrames/compare/v1.1.4...v1.2.0) (2026-11-05)
 
 
