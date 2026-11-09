@@ -71,9 +71,11 @@ local function reanchorToCenter(frame)
     local backup = {}
     for i = 1, frame:GetNumPoints() do backup[i] = {frame:GetPoint(i)} end
     local function apply(list)
-        frame:ClearAllPoints()
+        -- Native methods: MultiBarRight/Left are Edit Mode systems whose Lua
+        -- SetPoint override would taint Edit Mode (see Core.lua).
+        CWF.ClearAllPoints(frame)
         for _, p in ipairs(list) do
-            frame:SetPoint(p[1], p[2], p[3], p[4], p[5])
+            CWF.SetPoint(frame, p[1], p[2], p[3], p[4], p[5])
         end
     end
     if not pcall(apply, pts) then

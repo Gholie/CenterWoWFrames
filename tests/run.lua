@@ -335,6 +335,41 @@ scenarios["Forever spellbook: live UIPanelLayout-area attribute wins over UIPane
     check(near(f:GetLeft(), inset + 16), "minimized spellbook should shift as a left panel, left=" .. tostring(f:GetLeft()))
 end
 
+-- EditModeSystemMixin:OnSystemLoad swaps SetPoint/ClearAllPoints for Lua
+-- overrides that write Edit Mode state (editModeSystemAnchorDirty, snap
+-- bookkeeping). Called from addon code those writes are tainted, which broke
+-- Edit Mode (ADDON_ACTION_FORBIDDEN on TargetUnit(), secret-value compares
+-- in CompactUnitFrame). The addon must call the native methods instead.
+scenarios["Edit Mode system frames are moved without their Lua overrides"] = function()
+    local env = loadAddon({}, function(env)
+        standardFrames(env)
+        env.overrideCalls = {}
+        for _, name in ipairs({ "PlayerFrame", "TargetFrame", "MultiBarRight" }) do
+            local f = _G[name]
+            f.SetPointBase, f.ClearAllPointsBase = f.SetPoint, f.ClearAllPoints
+            f.SetPoint = function(self, ...)
+                table.insert(env.overrideCalls, name .. ":SetPoint")
+                return self:SetPointBase(...)
+            end
+            f.ClearAllPoints = function(self)
+                table.insert(env.overrideCalls, name .. ":ClearAllPoints")
+                return self:ClearAllPointsBase()
+            end
+        end
+    end)
+    login(env)
+    local G = env.G
+    G.EditModeManagerFrame.UpdateRightActionBarPositions()
+    env.fire("EDIT_MODE_LAYOUTS_UPDATED")
+    env.flushTimers()
+    G.SlashCmdList.CENTERWOWFRAMES("ratio 21:9")
+    for _, name in ipairs({ "PlayerFrame", "TargetFrame", "MultiBarRight" }) do
+        local _, rel = G[name]:GetPoint(1)
+        check(rel == G.CWF_CenterFrame, name .. " should still be re-anchored to CenterFrame")
+    end
+    check(#env.overrideCalls == 0, "addon called Edit Mode's tainting overrides: " .. table.concat(env.overrideCalls, ", "))
+end
+
 scenarios["loads cleanly on a client without Edit Mode or panel manager"] = function()
     local env = loadAddon({ noEditMode = true, noPanelManager = true, noSecretValues = true, noManagedFrames = true }, standardFrames)
     login(env)
